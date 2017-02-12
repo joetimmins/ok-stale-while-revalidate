@@ -18,6 +18,19 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
 
     private static final String GOOGLE_URL = "http://www.google.com";
+    private final Callback doubleResponseCallback = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+            String message = e.getLocalizedMessage();
+            show(message);
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            String string = response.body().string();
+            show(string);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,19 +44,8 @@ public class MainActivity extends AppCompatActivity {
                 .cache(new Cache(getCacheDir(), 10 * 1024 * 1024))
                 .build();
 
-        new RevalidatingHttpClient(client).request(request, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                String message = e.getLocalizedMessage();
-                show(message);
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String string = response.body().string();
-                show(string);
-            }
-        });
+        RevalidatingHttpClient revalidatingHttpClient = new RevalidatingHttpClient(client);
+        revalidatingHttpClient.request(request, doubleResponseCallback);
     }
 
     private void show(final String text) {
@@ -80,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Call to cache was successful");
                     doubleResponseCallback.onResponse(callToCache, responseFromCache);
                 } else {
-                    Log.e(TAG, "Call to cache was unsuccessful with code " + responseFromCache.code());
+                    Log.d(TAG, "Call to cache was unsuccessful with code " + responseFromCache.code());
                 }
             } catch (IOException e) {
                 // the call to the cache failed due to cancellation, a connectivity problem or timeout
@@ -95,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                     // if the cache request was successful but this one wasn't, just do nothing
                     // if both failed, call back with failure
                     if (unsuccessfulCacheRequest) {
-                        Log.d(TAG, "both cache and http revalidate calls failed");
+                        Log.e(TAG, "both cache and http revalidate calls failed", e);
                         doubleResponseCallback.onFailure(call, e);
                     } else {
                         // if we're in here, it means the cache request was fine

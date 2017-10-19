@@ -91,24 +91,24 @@ public class MainActivity extends AppCompatActivity {
             }
             final boolean unsuccessfulCacheRequest = !successfulCacheRequest;
             Call call = okHttpClient.newCall(request);
+            // even if we called back with something from the cache first, we still wanna make the network request
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    // if the cache request was successful but this one wasn't, just do nothing
-                    // if both failed, call back with failure
+                    // if both the cache and the network requests failed, call back with failure
                     if (unsuccessfulCacheRequest) {
                         Log.e(TAG, "both cache and http revalidate calls failed", e);
                         doubleResponseCallback.onFailure(call, e);
                     } else {
                         // if we're in here, it means the cache request was fine
                         // and doubleResponseCallback.onResponse() has already been called
+                        // so we shouldn't call back again
                         Log.e(TAG, "http revalidate call failed badly", e);
                     }
                 }
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    // even if we called back with something from the cache first, we still wanna make the request
                     if (response.isSuccessful()) {
                         Log.d(TAG, "http revalidate call succeeded");
                         doubleResponseCallback.onResponse(call, response);

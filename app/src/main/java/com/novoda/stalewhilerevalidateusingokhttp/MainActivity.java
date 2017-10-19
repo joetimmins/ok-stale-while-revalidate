@@ -80,13 +80,10 @@ public class MainActivity extends AppCompatActivity {
                 if (responseFromCache.isSuccessful()) {
                     successfulCacheRequest = true;
                     Log.d(TAG, "Call to cache was successful");
+                    doubleResponseCallback.onResponse(callToCache, responseFromCache);
                 } else {
                     Log.d(TAG, "Call to cache was unsuccessful with code " + responseFromCache.code());
                 }
-                // doubleResponseCallback needs to be called regardless of success or failure
-                // if success, it needs the response
-                // if failure, it needs the http status code
-                doubleResponseCallback.onResponse(callToCache, responseFromCache);
             } catch (IOException e) {
                 // the call to the cache failed due to cancellation, a connectivity problem or timeout
                 // if there's just nothing in the cache we shouldn't come in here
@@ -114,13 +111,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onResponse(Call call, Response response) throws IOException {
                     if (response.isSuccessful()) {
                         Log.d(TAG, "http revalidate call succeeded");
+                        doubleResponseCallback.onResponse(call, response);
                     } else {
                         Log.e(TAG, "http revalidate call was unsuccessful, with server code: " + response.code());
                     }
-                    // doubleResponseCallback needs to be called regardless of success or failure
-                    // if success, it needs the response
-                    // if failure, it needs the http status code
-                    doubleResponseCallback.onResponse(call, response);
                 }
             });
         }
